@@ -1,78 +1,141 @@
-# Fast-Perching
+# Trajectory Optimizer
 
-## 0. Overview
-**Fast-Perching** presents a novel trajectory planning method for real-time aerial perching, which adaptively adjusts terminal states and the trajectory duration. This feature is especially notable on micro aerial robots with low maneuverability or scenarios where the space is not enough.
+A ROS-independent trajectory optimization library for UAV perching maneuvers.
 
-**Authors**: Jialin Ji, Tiankai Yang and [Fei Gao](https://ustfei.com/) from the [ZJU Fast Lab](http://zju-fast.com/). 
+## Overview
 
-**Paper**: [Real-Time Trajectory Planning for Aerial Perching](https://arxiv.org/abs/2203.01061), Jialin Ji, Tiankai Yang, Chao Xu, Fei Gao, Accepted in IEEE/RSJ International Conference on Intelligent Robots and Systems (__IROS 2022__).
+This project provides trajectory optimization capabilities for UAV perching, extracted from the original ROS-based Fast-Perching implementation. The library provides:
 
-**Video Links**: [bilibili](https://www.bilibili.com/video/BV14q4y147uz)
-<a href="https://www.bilibili.com/video/BV14q4y147uz" target="blank">
-  <p align="center">
-    <img src="figs/cover.png" width="500"/>
-  </p>
-</a>
+- **TrajOpt**: The original class interface, cleaned of ROS dependencies for standalone use
 
-## 1. Simulation of Aerial Perching
+## Features
 
->Preparation and visualization:
-```
-git clone https://github.com/ZJU-FAST-Lab/Fast-Perching
-cd Fast-Perching
-catkin_make
-source devel/setup.zsh
-chmod +x sh_utils/pub_triger.sh
-roslaunch planning perching.launch
-```
+- **ROS-Independent**: Complete removal of ROS dependencies for use in any C++ project
+- **MINCO Trajectory Generation**: Minimum control effort trajectory optimization
+- **L-BFGS Optimization**: Efficient gradient-based optimization
+- **Collision Avoidance**: Built-in collision detection and avoidance constraints
+- **Dynamic Constraints**: Velocity, acceleration, thrust, and angular velocity limits
+- **Perching Optimization**: Specialized for UAV perching maneuvers
 
->Start the perching planner:
-```
-./sh_utils/pub_triger.sh
-```
-<p align="center">
-    <img src="figs/perching1.gif" width="400"/>
-</p>
+## Dependencies
 
->Change the position, veliocity and orientation of the landing plate:
-```html
-<!-- DIR: src/planning/launch/perching.launch -->
-  <param name="perching_px" value=""/>
-  <param name="perching_py" value=""/>
-  <param name="perching_pz" value=""/>
-  <param name="perching_vx" value=""/>
-  <param name="perching_vy" value=""/>
-  <param name="perching_vz" value=""/>
-  <param name="perching_axis_x" value=""/>
-  <param name="perching_axis_y" value=""/>
-  <param name="perching_axis_z" value=""/>
-  <param name="perching_theta" value=""/>
+- **Eigen3**: Linear algebra library
+- **C++14**: Minimum C++ standard required
+
+## Building
+Windows:
+```bash
+mkdir build
+cd build
+cmake -G "MinGW Makefiles" ..
+mingw32-make -j8
 ```
 
-<p align="center">
-    <img src="figs/perching2.gif" width="400"/>
-</p>
+## Usage
 
-## 2. Other Settings or Functions
+### Basic Example
 
->Enable replan module of the planner:
-```html
-<!-- DIR: src/planning/launch/perching.launch -->
-  <param name="replan" value="true"/>
+```cpp
+#include "traj_opt.h"
+
+// Create optimizer
+traj_opt::TrajOpt optimizer;
+
+// Configure parameters
+optimizer.setDynamicLimits(10.0, 10.0, 20.0, 2.0, 3.0, 2.0);
+optimizer.setRobotParameters(1.0, 0.3, 0.1, 0.5);
+optimizer.setOptimizationWeights(1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
+
+// Set initial state
+Eigen::MatrixXd initial_state(3, 4);
+initial_state.col(0) = Eigen::Vector3d(0.0, 0.0, 2.0);  // position
+initial_state.col(1) = Eigen::Vector3d(5.0, 0.0, 0.0);  // velocity
+
+// Set target
+Eigen::Vector3d target_position(10.0, 0.0, 1.0);
+Eigen::Vector3d target_velocity(2.0, 0.0, 0.0);
+Eigen::Quaterniond landing_quaternion(1.0, 0.0, 0.0, 0.0);
+
+// Generate trajectory
+Trajectory result_trajectory;
+bool success = optimizer.generate_traj(
+    initial_state, target_position, target_velocity, 
+    landing_quaternion, 10, result_trajectory
+);
 ```
-<p align="center">
-    <img src="figs/replan.gif" width="400"/>
-</p>
 
->Enable pause debug module of the planner:
-```html
-<!-- DIR: src/planning/launch/perching.launch -->
-  <param name="pause_debug" value="true"/>
+### Configuration Methods
+
+#### Dynamic Limits
+```cpp
+optimizer.setDynamicLimits(
+    max_velocity,        // m/s
+    max_acceleration,    // m/s²
+    max_thrust,         // N
+    min_thrust,         // N
+    max_angular_velocity,    // rad/s
+    max_yaw_angular_velocity // rad/s
+);
 ```
 
-<p align="center">
-    <img src="figs/debug.gif" width="400"/>
-</p>
+#### Robot Parameters
+```cpp
+optimizer.setRobotParameters(
+    velocity_plus,   // Landing velocity offset
+    robot_length,    // Robot length (m)
+    robot_radius,    // Robot radius (m)
+    platform_radius  // Landing platform radius (m)
+);
+```
 
-## 3. Acknowledgement
-We use [**MINCO**](https://github.com/ZJU-FAST-Lab/GCOPTER) as our trajectory representation.
+#### Optimization Weights
+```cpp
+optimizer.setOptimizationWeights(
+    time_weight,              // Time penalty weight
+    velocity_tail_weight,     // Terminal velocity weight
+    position_weight,          // Position constraint weight
+    velocity_weight,          // Velocity constraint weight
+    acceleration_weight,      // Acceleration constraint weight
+    thrust_weight,           // Thrust constraint weight
+    angular_velocity_weight, // Angular velocity constraint weight
+    perching_collision_weight // Collision avoidance weight
+);
+```
+
+## Code Structure
+
+```
+├── include/
+│   ├── traj_opt.h              # Main trajectory optimizer interface
+│   ├── minco.hpp               # MINCO trajectory generation
+│   ├── lbfgs_raw.hpp          # L-BFGS optimization
+│   ├── poly_traj_utils.hpp    # Polynomial trajectory utilities
+│   └── root_finder.hpp        # Root finding utilities
+├── src/
+│   └── traj_opt_perching.cc   # Implementation
+├── examples/
+│   ├── basic_example.cpp      # Basic usage example
+│   └── precision_test.cpp     # Precision testing
+├── scripts/
+│   ├── visualize_trajectories.py  # Trajectory visualization
+│   └── trajectory_summary.py      # Trajectory analysis
+└── CMakeLists.txt             # Build configuration
+```
+
+## Key Features
+
+- **ROS-Independent**: Complete elimination of `ros::NodeHandle` and ROS-specific code
+- **Clean Interface**: Simplified API with clear setter methods
+- **Visualization Tools**: Python scripts for trajectory analysis and visualization
+- **Example Code**: Working examples demonstrating usage
+- **MINCO Optimization**: Minimum control effort trajectory generation
+
+## Original Attribution
+
+This code is derived from the Fast-Perching project:
+- **Repository**: [ZJU-FAST-Lab/Fast-Perching](https://github.com/ZJU-FAST-Lab/Fast-Perching)
+- **Original Authors**: ZJU FAST Lab
+
+## License
+
+Please refer to the original Fast-Perching repository for licensing information.
