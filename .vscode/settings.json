@@ -1,10 +1,104 @@
 {
+  // Keep user's original settings
   "editor.formatOnSave": false,
-  "C_Cpp.clang_format_style": "{ BasedOnStyle: Google, IndentWidth: 2, ColumnLimit: 0}",
-  "python.autoComplete.extraPaths": [
-    "/opt/ros/noetic/lib/python3/dist-packages"
+  "C_Cpp.clang_format_style": "{ BasedOnStyle: Google, IndentWidth: 4, ColumnLimit: 0}",
+
+  // C/C++ specific settings for Ubuntu
+  "C_Cpp.default.compilerPath": "/usr/bin/g++",
+  "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+  "C_Cpp.default.cppStandard": "c++17",
+  "C_Cpp.default.cStandard": "c17",
+
+  // Enable format on save for C/C++ files
+  "[cpp]": {
+    "editor.formatOnSave": true
+  },
+  "[c]": {
+    "editor.formatOnSave": true
+  },
+
+  // File associations
+  "files.associations": {
+    "*.h": "cpp",
+    "*.hpp": "cpp",
+    "*.tcc": "cpp",
+    "*.cc": "cpp",
+    "iostream": "cpp",
+    "array": "cpp",
+    "atomic": "cpp",
+    "bit": "cpp",
+    "cctype": "cpp",
+    "charconv": "cpp",
+    "chrono": "cpp",
+    "clocale": "cpp",
+    "cmath": "cpp",
+    "compare": "cpp",
+    "concepts": "cpp",
+    "cstdarg": "cpp",
+    "cstddef": "cpp",
+    "cstdint": "cpp",
+    "cstdio": "cpp",
+    "cstdlib": "cpp",
+    "cstring": "cpp",
+    "ctime": "cpp",
+    "cwchar": "cpp",
+    "cwctype": "cpp",
+    "deque": "cpp",
+    "set": "cpp",
+    "string": "cpp",
+    "unordered_map": "cpp",
+    "vector": "cpp",
+    "exception": "cpp",
+    "algorithm": "cpp",
+    "functional": "cpp",
+    "iterator": "cpp",
+    "memory": "cpp",
+    "memory_resource": "cpp",
+    "numeric": "cpp",
+    "optional": "cpp",
+    "random": "cpp",
+    "ratio": "cpp",
+    "string_view": "cpp",
+    "system_error": "cpp",
+    "tuple": "cpp",
+    "type_traits": "cpp",
+    "utility": "cpp",
+    "format": "cpp",
+    "fstream": "cpp",
+    "initializer_list": "cpp",
+    "iomanip": "cpp",
+    "iosfwd": "cpp",
+    "istream": "cpp",
+    "limits": "cpp",
+    "new": "cpp",
+    "numbers": "cpp",
+    "ostream": "cpp",
+    "semaphore": "cpp",
+    "span": "cpp",
+    "sstream": "cpp",
+    "stdexcept": "cpp",
+    "stop_token": "cpp",
+    "streambuf": "cpp",
+    "text_encoding": "cpp",
+    "thread": "cpp",
+    "typeinfo": "cpp",
+    "variant": "cpp"
+  },
+
+  // CMake Tools extension settings based on your build instructions
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.configureOnOpen": true,
+  "cSpell.words": [
+    "minco", "lbfgs"
   ],
-  "python.analysis.extraPaths": [
-    "/opt/ros/noetic/lib/python3/dist-packages"
-  ]
+
+  // Exclude build directory from file explorer and search
+  "files.exclude": {
+    "**/build": true,
+    "**/cmake-build-debug": true
+  },
+  "search.exclude": {
+    // "**/build": true,
+    "**/cmake-build-debug": true
+  }
 }
